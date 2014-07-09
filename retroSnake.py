@@ -1,5 +1,6 @@
 import math
 import weakref
+import itertools
 
 import pygame
 
@@ -112,6 +113,23 @@ class Line(object):
 
     def setWorld(self, matrix):
         self.world = matrix
+
+
+class LineLoop(object):
+    """ LineLoop object. """
+    def __init__(self, *vertices):
+        self.lines = []
+        for a, b in itertools.izip(vertices, vertices[1:]):
+            self.lines.append(Line(a, b))
+        self.lines.append(Line(vertices[-1], vertices[0]))
+
+    def draw(self, matrix=Matrix()):
+        for line in self.lines:
+            line.draw(matrix)
+
+    def setWorld(self, matrix):
+        for line in self.lines:
+            line.setWorld(matrix)
 
 
 class Sprite(object):

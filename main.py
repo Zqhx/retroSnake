@@ -16,21 +16,11 @@ def main():
         retroSnake.Vector(-20, -20),
         retroSnake.Vector(20, 20))])
     box = retroSnake.Sprite([
-        retroSnake.Line(
+        retroSnake.LineLoop(
             retroSnake.Vector(-20, -20),
             retroSnake.Vector(20, -20),
-            ),
-        retroSnake.Line(
-            retroSnake.Vector(20, -20),
-            retroSnake.Vector(20, 20),
-            ),
-        retroSnake.Line(
             retroSnake.Vector(20, 20),
             retroSnake.Vector(-20, 20),
-            ),
-        retroSnake.Line(
-            retroSnake.Vector(-20, 20),
-            retroSnake.Vector(-20, -20),
             )
         ])
     world.addSprite(line)
@@ -40,7 +30,7 @@ def main():
 
     while True:
         pygame.display.set_caption("FPS: %d" % (clock.get_fps(),))
-        clock.tick(30)
+        clock.tick(100)
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit()
