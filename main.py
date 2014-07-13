@@ -37,6 +37,7 @@ class Ship(object):
         dead = [b for b in self.bullets if b[0]+4000 < tick]
         for item in dead:
             item[1].expire()
+            self.bullets.remove(item)
         for b in self.bullets:
             b[1].update()
 
@@ -60,7 +61,29 @@ class Bullet(object):
 
     def expire(self):
         self.world.removeSprite(self.sprite)
-        self.spawner.bullets.remove(item)
+
+
+class Asteroid(object):
+    def __init__(self, world):
+        vertices = []
+        step = 12
+        for i in xrange(12):
+            v = retroSnake.Vector(0, random.randint(20, 45))
+            v = retroSnake.newRotateMatrix(step*i)*v
+            vertices.append(v)
+
+        points = [retroSnake.Point(v) for v in vertices]
+        self.sprite = retroSnake.Sprite([
+            retroSnake.Polygon(
+                *vertices
+                )
+            ])
+        self.world = world
+
+        world.addSprite(self.sprite)
+
+    def update(self):
+        pass
 
 
 def main():
@@ -77,6 +100,7 @@ def main():
     handler = {}
 
     ship = updater["ship"] = handler["ship"] = Ship(world)
+    asteroid = updater["asteroid"] = Asteroid(world)
 
     clock = pygame.time.Clock()
 
@@ -91,6 +115,10 @@ def main():
                 camera.applyMatrix(retroSnake.newScaleMatrix(2))
             if event.type == pygame.KEYDOWN and event.key == pygame.K_k:
                 camera.applyMatrix(retroSnake.newScaleMatrix(.5))
+            if event.type == pygame.KEYDOWN and event.key == pygame.K_u:
+                updater.pop('asteroid', None)
+                world.removeSprite(asteroid.sprite)
+                asteroid = Asteroid(world)
 
             for k in handler.keys():
                 updater[k].handle(event)
