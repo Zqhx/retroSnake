@@ -100,6 +100,16 @@ class Matrix(object):
             return Matrix(tuple(data))
 
 
+class Point(object):
+    def __init__(self, pos):
+        self.pos = pos
+
+    def draw(self, matrix=Matrix()):
+        pos = matrix*self.pos
+        pos = (int(pos.data[0]), int(pos.data[1]))
+        pygame.draw.circle(_display, (0, 255, 0), pos, 3)
+
+
 class Line(object):
     """ Line object. """
     def __init__(self, v1, v2):
@@ -118,18 +128,27 @@ class Line(object):
 class LineLoop(object):
     """ LineLoop object. """
     def __init__(self, *vertices):
-        self.lines = []
-        for a, b in itertools.izip(vertices, vertices[1:]):
-            self.lines.append(Line(a, b))
-        self.lines.append(Line(vertices[-1], vertices[0]))
+        self.vertices = vertices
 
     def draw(self, matrix=Matrix()):
-        for line in self.lines:
-            line.draw(matrix)
+        verts = [(matrix*v).data[:2] for v in self.vertices]
+        pygame.draw.aalines(_display, (0, 255, 0), True, verts)
 
     def setWorld(self, matrix):
-        for line in self.lines:
-            line.setWorld(matrix)
+        self.world = matrix
+
+
+class Polygon(object):
+    def __init__(self, *vertices):
+        self.vertices = vertices
+
+    def draw(self, matrix=Matrix()):
+        verts = [(matrix*v).data[:2] for v in self.vertices]
+        pygame.draw.polygon(_display, (0, 42, 0), verts)
+        pygame.draw.aalines(_display, (0, 255, 0), True, verts)
+
+    def setWorld(self, matrix):
+        self.world = matrix
 
 
 class Sprite(object):
@@ -142,7 +161,7 @@ class Sprite(object):
     def setLocalMatrix(self, matrix):
         self.local = matrix
 
-    def getLocalMatrix(self, matrix):
+    def getLocalMatrix(self):
         return self.local
 
     def applyLocalMatrix(self, matrix):
@@ -151,7 +170,7 @@ class Sprite(object):
     def setWorldMatrix(self, matrix):
         self.world = matrix
 
-    def getWorldMatrix(self, matrix):
+    def getWorldMatrix(self):
         return self.world
 
     def applyWorldMatrix(self, matrix):
@@ -199,6 +218,12 @@ class World(object):
 
     def addSprite(self, sprite):
         self.sprites.append(sprite)
+
+    def removeSprite(self, sprite):
+        self.sprites.remove(sprite)
+
+    def update(self, sprite):
+        pass
 
 
 class Camera(object):

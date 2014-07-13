@@ -1,5 +1,66 @@
+import random
 import retroSnake
 from retroSnake import pygame
+
+
+class Ship(object):
+    def __init__(self, world):
+        self.sprite = retroSnake.Sprite([
+            retroSnake.Polygon(
+                retroSnake.Vector(0, -15),
+                retroSnake.Vector(10, 15),
+                retroSnake.Vector(-10, 15),
+                )
+            ])
+        self.world = world
+        self.bullets = []
+
+        world.addSprite(self.sprite)
+
+    def handle(self, event):
+        if event.type == pygame.KEYDOWN and event.key == pygame.K_SPACE:
+            bullet = Bullet(self.world, self, retroSnake.Vector(0, -15))
+            self.bullets.append((pygame.time.get_ticks(), bullet))
+
+    def update(self):
+        keys = pygame.key.get_pressed()
+        rotSpeed = .1
+        if keys[pygame.K_w]:
+            self.sprite.applyLocalMatrix(retroSnake.newTranslateMatrix(0, -5))
+        if keys[pygame.K_s]:
+            self.sprite.applyLocalMatrix(retroSnake.newTranslateMatrix(0, 0))
+        if keys[pygame.K_a]:
+            self.sprite.applyLocalMatrix(retroSnake.newRotateMatrix(-rotSpeed))
+        if keys[pygame.K_d]:
+            self.sprite.applyLocalMatrix(retroSnake.newRotateMatrix(rotSpeed))
+        tick = pygame.time.get_ticks()
+        dead = [b for b in self.bullets if b[0]+4000 < tick]
+        for item in dead:
+            item[1].expire()
+        for b in self.bullets:
+            b[1].update()
+
+
+class Bullet(object):
+    def __init__(self, world, spawner, delta):
+        self.sprite = retroSnake.Sprite([
+            retroSnake.Point(retroSnake.Vector(0, 0))
+            ])
+        self.sprite.setLocalMatrix(spawner.sprite.getLocalMatrix())
+        self.sprite.setWorldMatrix(spawner.sprite.getWorldMatrix())
+        self.sprite.applyLocalMatrix(
+            retroSnake.newTranslateMatrix(*delta.data[:2])
+            )
+        self.world = world
+        self.spawner = spawner
+        world.addSprite(self.sprite)
+
+    def update(self):
+        self.sprite.applyLocalMatrix(retroSnake.newTranslateMatrix(0, -8))
+
+    def expire(self):
+        self.world.removeSprite(self.sprite)
+        self.spawner.bullets.remove(item)
 
 
 def main():
@@ -12,25 +73,16 @@ def main():
     camera = retroSnake.Camera(world)
     camera.applyMatrix(retroSnake.newTranslateMatrix(320, 240))
 
-    line = retroSnake.Sprite([retroSnake.Line(
-        retroSnake.Vector(-20, -20),
-        retroSnake.Vector(20, 20))])
-    box = retroSnake.Sprite([
-        retroSnake.LineLoop(
-            retroSnake.Vector(-20, -20),
-            retroSnake.Vector(20, -20),
-            retroSnake.Vector(20, 20),
-            retroSnake.Vector(-20, 20),
-            )
-        ])
-    world.addSprite(line)
-    world.addSprite(box)
+    updater = {}
+    handler = {}
+
+    ship = updater["ship"] = handler["ship"] = Ship(world)
 
     clock = pygame.time.Clock()
 
     while True:
         pygame.display.set_caption("FPS: %d" % (clock.get_fps(),))
-        clock.tick(100)
+        clock.tick(30)
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit()
@@ -40,27 +92,11 @@ def main():
             if event.type == pygame.KEYDOWN and event.key == pygame.K_k:
                 camera.applyMatrix(retroSnake.newScaleMatrix(.5))
 
-        keys = pygame.key.get_pressed()
-        if keys[pygame.K_RIGHT]:
-            line.applyWorldMatrix(retroSnake.newTranslateMatrix(5, 0))
-        if keys[pygame.K_LEFT]:
-            line.applyWorldMatrix(retroSnake.newTranslateMatrix(-5, 0))
-        if keys[pygame.K_UP]:
-            line.applyWorldMatrix(retroSnake.newTranslateMatrix(0, -5))
-        if keys[pygame.K_DOWN]:
-            line.applyWorldMatrix(retroSnake.newTranslateMatrix(0, 5))
+            for k in handler.keys():
+                updater[k].handle(event)
 
-        if keys[pygame.K_d]:
-            box.applyWorldMatrix(retroSnake.newTranslateMatrix(5, 0))
-        if keys[pygame.K_a]:
-            box.applyWorldMatrix(retroSnake.newTranslateMatrix(-5, 0))
-        if keys[pygame.K_w]:
-            box.applyWorldMatrix(retroSnake.newTranslateMatrix(0, -5))
-        if keys[pygame.K_s]:
-            box.applyWorldMatrix(retroSnake.newTranslateMatrix(0, 5))
-
-        box.applyLocalMatrix(retroSnake.newRotateMatrix(.01))
-        line.applyLocalMatrix(retroSnake.newRotateMatrix(-.01))
+        for k in updater.keys():
+            updater[k].update()
 
         display.fill((0, 0, 0))
         camera.draw()
