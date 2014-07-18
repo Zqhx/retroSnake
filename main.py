@@ -19,6 +19,8 @@ class Ship(object):
 
     def handle(self, event):
         if event.type == pygame.KEYDOWN and event.key == pygame.K_SPACE:
+            if len(self.bullets) > 15:
+                return
             bullet = Bullet(self.world, self, retroSnake.Vector(0, -15))
             self.bullets.append((pygame.time.get_ticks(), bullet))
 
@@ -104,7 +106,15 @@ def main():
 
     clock = pygame.time.Clock()
 
+    lt = pygame.time.get_ticks()
     while True:
+        t = pygame.time.get_ticks()
+        if t-1000 > lt:
+            lt = t
+            updater.pop('asteroid', None)
+            world.removeSprite(asteroid.sprite)
+            asteroid = Asteroid(world)
+
         pygame.display.set_caption("FPS: %d" % (clock.get_fps(),))
         clock.tick(30)
         for event in pygame.event.get():
